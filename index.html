@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sweet Donut – Caminar y Recoger</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #ffd6e8;
+    font-family: Arial, sans-serif;
+  }
+
+  #hud {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255,255,255,0.85);
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 18px;
+    z-index: 10;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="hud">🍩 Donas: <span id="score">0</span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+
+<script>
+let scene, camera, renderer;
+let donuts = [];
+let score = 0;
+
+scene = new THREE.Scene();
+
+camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+);
+camera.position.set(0, 1.6, 5); // altura de persona
+
+renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Luces
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5, 10, 5);
+scene.add(light);
+
+// Suelo
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(50, 50),
+  new THREE.MeshStandardMaterial({ color: 0xffc0da })
+);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+// Crear dona
+function createDonut() {
+  const geometry = new THREE.TorusGeometry(0.4, 0.18, 16, 32);
+  const material = new THREE.MeshStandardMaterial({ color: 0xff6fae });
+  const donut = new THREE.Mesh(geometry, material);
+
+  donut.position.set(
+    (Math.random() - 0.5) * 10,
+    6 + Math.random() * 4,
+    camera.position.z - 10 - Math.random() * 10
+  );
+
+  scene.add(donut);
+  donuts.push(donut);
+}
+
+// Generar donas continuamente
+setInterval(createDonut, 800);
+
+// Movimiento tipo caminar
+let moveForward = true;
+let lookX = 0;
+
+window.addEventListener("touchmove", e => {
+  lookX = (e.touches[0].clientX / window.innerWidth - 0.5) * 0.05;
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Caminar hacia adelante
+  if (moveForward) {
+    camera.position.z -= 0.05;
+  }
+
+  // Girar vista
+  camera.rotation.y -= lookX;
+
+  donuts.forEach((donut, index) => {
+    donut.rotation.x += 0.05;
+    donut.rotation.y += 0.05;
+
+    // Caída
+    donut.position.y -= 0.04;
+
+    // Colisión (caminar y recoger)
+    const distance = donut.position.distanceTo(camera.position);
+    if (distance < 1) {
+      scene.remove(donut);
+      donuts.splice(index, 1);
+      score++;
+      document.getElementById("score").textContent = score;
+    }
+
+    // Eliminar si cae al suelo
+    if (donut.position.y < 0) {
+      scene.remove(donut);
+      donuts.splice(index, 1);
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>
