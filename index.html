@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sweet Donut – Caminar y Recoger</title>
+<title>Sweet Donut Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <style>
@@ -15,124 +15,194 @@
 
   #hud {
     position: absolute;
-    top: 15px;
-    left: 15px;
-    background: rgba(255,255,255,0.85);
-    padding: 10px 15px;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.9);
+    padding: 10px 14px;
     border-radius: 12px;
-    font-size: 18px;
+    font-size: 16px;
     z-index: 10;
+  }
+
+  #logo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff77aa;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    z-index: 10;
+  }
+
+  #message {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(255,182,213,0.95);
+    color: #7a2e4a;
+    font-size: 32px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 20;
   }
 </style>
 </head>
 
 <body>
 
-<div id="hud">🍩 Donas: <span id="score">0</span></div>
+<div id="hud">
+Nivel: <span id="level">1</span><br>
+Tiempo: <span id="time">30</span>s<br>
+Donas: <span id="score">0</span> / <span id="goal">10</span>
+</div>
+
+<div id="logo">🍩 Sweet Donut</div>
+<div id="message"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
 
 <script>
+/* ====== AUDIO ====== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playCollectSound() {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = 880;
+  gain.gain.value = 0.2;
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.15);
+}
+
+function playLevelUpSound() {
+  const osc = audioCtx.createOscillator();
+  osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.4);
+  osc.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.4);
+}
+
+function playLoseSound() {
+  const osc = audioCtx.createOscillator();
+  osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.6);
+  osc.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.6);
+}
+
+/* ====== GAME ====== */
 let scene, camera, renderer;
 let donuts = [];
 let score = 0;
+let level = 1;
+let timeLeft = 30;
+let goal = 10;
+let gameActive = true;
 
 scene = new THREE.Scene();
-
-camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  100
-);
-camera.position.set(0, 1.6, 5); // altura de persona
+camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.z = 5;
 
 renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Luces
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 const light = new THREE.PointLight(0xffffff, 1);
-light.position.set(5, 10, 5);
+light.position.set(5,5,5);
 scene.add(light);
 
-// Suelo
 const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(50, 50),
-  new THREE.MeshStandardMaterial({ color: 0xffc0da })
+  new THREE.PlaneGeometry(50,50),
+  new THREE.MeshStandardMaterial({ color: 0xffc0d9 })
 );
-floor.rotation.x = -Math.PI / 2;
+floor.rotation.x = -Math.PI/2;
+floor.position.y = -2;
 scene.add(floor);
 
-// Crear dona
-function createDonut() {
-  const geometry = new THREE.TorusGeometry(0.4, 0.18, 16, 32);
-  const material = new THREE.MeshStandardMaterial({ color: 0xff6fae });
-  const donut = new THREE.Mesh(geometry, material);
-
-  donut.position.set(
-    (Math.random() - 0.5) * 10,
-    6 + Math.random() * 4,
-    camera.position.z - 10 - Math.random() * 10
+function spawnDonut() {
+  const donut = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4,0.18,16,32),
+    new THREE.MeshStandardMaterial({ color: 0xff77aa })
   );
-
+  donut.position.set((Math.random()-0.5)*8, 5, camera.position.z - Math.random()*10);
   scene.add(donut);
   donuts.push(donut);
 }
 
-// Generar donas continuamente
-setInterval(createDonut, 800);
+setInterval(() => gameActive && spawnDonut(), 800);
 
-// Movimiento tipo caminar
-let moveForward = true;
-let lookX = 0;
+const raycaster = new THREE.Raycaster();
+const touch = new THREE.Vector2();
 
-window.addEventListener("touchmove", e => {
-  lookX = (e.touches[0].clientX / window.innerWidth - 0.5) * 0.05;
+window.addEventListener("touchstart", e => {
+  if (audioCtx.state === "suspended") audioCtx.resume();
+
+  touch.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+  touch.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(touch, camera);
+
+  const hits = raycaster.intersectObjects(donuts);
+  if (hits.length > 0) {
+    const d = hits[0].object;
+    scene.remove(d);
+    donuts = donuts.filter(x => x !== d);
+    score++;
+    document.getElementById("score").textContent = score;
+    playCollectSound();
+  }
 });
+
+function nextLevel() {
+  level++;
+  score = 0;
+  timeLeft = 30;
+  goal += 10;
+  document.getElementById("level").textContent = level;
+  document.getElementById("goal").textContent = goal;
+  playLevelUpSound();
+}
+
+setInterval(() => {
+  if (!gameActive) return;
+  timeLeft--;
+  document.getElementById("time").textContent = timeLeft;
+
+  if (score >= goal) nextLevel();
+
+  if (timeLeft <= 0) {
+    gameActive = false;
+    playLoseSound();
+    const msg = document.getElementById("message");
+    msg.style.display = "flex";
+    msg.innerHTML = "😢 Tiempo terminado<br>Donas: " + score;
+  }
+}, 1000);
 
 function animate() {
   requestAnimationFrame(animate);
+  camera.position.z -= 0.03;
 
-  // Caminar hacia adelante
-  if (moveForward) {
-    camera.position.z -= 0.05;
-  }
-
-  // Girar vista
-  camera.rotation.y -= lookX;
-
-  donuts.forEach((donut, index) => {
-    donut.rotation.x += 0.05;
-    donut.rotation.y += 0.05;
-
-    // Caída
-    donut.position.y -= 0.04;
-
-    // Colisión (caminar y recoger)
-    const distance = donut.position.distanceTo(camera.position);
-    if (distance < 1) {
-      scene.remove(donut);
-      donuts.splice(index, 1);
-      score++;
-      document.getElementById("score").textContent = score;
-    }
-
-    // Eliminar si cae al suelo
-    if (donut.position.y < 0) {
-      scene.remove(donut);
-      donuts.splice(index, 1);
-    }
+  donuts.forEach(d => {
+    d.rotation.x += 0.02;
+    d.rotation.y += 0.02;
+    d.position.y -= 0.04;
+    if (d.position.y < -2) scene.remove(d);
   });
 
   renderer.render(scene, camera);
 }
-
 animate();
 
 window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
