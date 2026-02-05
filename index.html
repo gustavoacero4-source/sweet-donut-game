@@ -2,98 +2,85 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Sweet Donut AR</title>
+<title>Sweet Donut AR Mascota</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
 
 <style>
-body{margin:0;overflow:hidden;font-family:sans-serif}
-#ui{
-  position:fixed;top:10px;left:10px;
-  background:rgba(255,255,255,.9);
-  padding:10px 14px;border-radius:12px;
-  font-size:16px;z-index:10
-}
-#msg{
-  display:none;position:fixed;inset:0;
-  background:rgba(255,200,220,.95);
-  color:#7a2e4a;font-size:32px;
-  justify-content:center;align-items:center;
-  text-align:center;z-index:20
+body { margin:0; overflow:hidden; }
+#speech {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,230,240,.95);
+  padding: 12px 18px;
+  border-radius: 20px;
+  font-size: 18px;
+  color: #7a2e4a;
+  display: none;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">
-⏱️ <span id="time">30</span>s<br>
-🍩 <span id="score">0</span> / 10
-</div>
-
-<div id="msg"></div>
+<div id="speech"></div>
 
 <audio id="bg" src="music.mp3" loop></audio>
-<audio id="collect" src="collect.mp3"></audio>
-<audio id="win" src="win.mp3"></audio>
-<audio id="lose" src="lose.mp3"></audio>
+<audio id="talk" src="talk.mp3"></audio>
 
 <a-scene
   embedded
-  arjs="sourceType: webcam; debugUIEnabled: false"
+  arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false"
   vr-mode-ui="enabled: false">
 
-  <a-entity camera gps-camera rotation-reader></a-entity>
+  <!-- MARCADOR POR IMAGEN -->
+  <a-nft
+    type="nft"
+    url="sweetdonut"
+    smooth="true"
+    smoothCount="10"
+    smoothTolerance="0.01"
+    smoothThreshold="5">
 
+    <!-- MUÑECO DONA -->
+    <a-entity
+      geometry="primitive: torus; radius:0.4; radiusTubular:0.15"
+      material="color:#ff8fcf; metalness:0.2; roughness:0.3"
+      animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"
+      animation__float="property: position; dir: alternate; dur: 1500; easing: easeInOutSine; loop: true; to: 0 0.2 0"
+      scale="1 1 1">
+    </a-entity>
+
+  </a-nft>
+
+  <a-entity camera></a-entity>
 </a-scene>
 
 <script>
-let score=0,time=30,goal=10,active=true;
-const bg=document.getElementById("bg");
+const frases = [
+  "🍩 ¡Las donas hacen feliz el día!",
+  "😋 Comparte dulzura con Sweet Donut",
+  "💖 Una dona siempre es buena idea",
+  "🎉 Ven por tu Sweet Donut hoy"
+];
+
+const bg = document.getElementById("bg");
+const talk = document.getElementById("talk");
+const speech = document.getElementById("speech");
+
 bg.play();
 
-function spawnDonut(){
-  let d=document.createElement("a-image");
-  d.setAttribute("src","donut.png");
-  d.setAttribute("scale","1 1 1");
-  d.setAttribute("position",`${(Math.random()-0.5)*5} ${(Math.random()*2)+1} -${Math.random()*8+3}`);
-  d.setAttribute("look-at","[camera]");
-  d.addEventListener("click",()=>{
-    if(!active)return;
-    document.getElementById("collect").play();
-    d.remove();
-    score++;
-    document.getElementById("score").textContent=score;
-    if(score>=goal)end(true);
-  });
-  document.querySelector("a-scene").appendChild(d);
-}
-
-for(let i=0;i<10;i++)spawnDonut();
-
-let timer=setInterval(()=>{
-  if(!active)return;
-  time--;
-  document.getElementById("time").textContent=time;
-  if(time<=0)end(false);
-},1000);
-
-function end(win){
-  active=false;
-  clearInterval(timer);
-  bg.pause();
-  let m=document.getElementById("msg");
-  m.style.display="flex";
-  if(win){
-    document.getElementById("win").play();
-    m.innerHTML="🏆 ¡Ganaste!<br>Donas colectadas: "+score;
-  }else{
-    document.getElementById("lose").play();
-    m.innerHTML="😢 Tiempo agotado<br>Donas: "+score;
-  }
-}
+setInterval(() => {
+  const msg = frases[Math.floor(Math.random()*frases.length)];
+  speech.textContent = msg;
+  speech.style.display = "block";
+  talk.play();
+  setTimeout(()=>speech.style.display="none", 3000);
+}, 6000);
 </script>
 
 </body>
