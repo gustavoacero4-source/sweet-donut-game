@@ -9,11 +9,7 @@
 <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: sans-serif;
-}
+body { margin:0; overflow:hidden; font-family:sans-serif; }
 
 #bubble {
   position: fixed;
@@ -42,36 +38,28 @@ body {
   arjs="sourceType: webcam; debugUIEnabled: false"
   vr-mode-ui="enabled: false">
 
-  <!-- MARKER HIRO -->
-  <a-marker preset="hiro" id="marker">
+  <!-- QR CON LOGO -->
+  <a-marker type="barcode" value="0" id="marker">
 
-    <!-- MUÑECO DONA -->
-    <a-entity id="donut" position="0 0 0" scale="0.8 0.8 0.8">
+    <!-- MASCOTA DONA -->
+    <a-entity position="0 0 0" scale="0.8 0.8 0.8">
 
       <!-- CUERPO -->
       <a-torus radius="0.45" radius-tubular="0.18"
-        material="color:#ff8fcf; roughness:0.3">
-      </a-torus>
+        material="color:#ff8fcf; roughness:0.3"></a-torus>
 
       <!-- OJOS -->
-      <a-sphere position="-0.15 0.12 0.35" radius="0.05" color="#000"
-        animation="property: scale; dir: alternate; dur: 2500; loop:true; to: 1 0.2 1">
-      </a-sphere>
-
-      <a-sphere position="0.15 0.12 0.35" radius="0.05" color="#000"
-        animation="property: scale; dir: alternate; dur: 2500; loop:true; to: 1 0.2 1">
-      </a-sphere>
+      <a-sphere position="-0.15 0.12 0.35" radius="0.05" color="#000"></a-sphere>
+      <a-sphere position="0.15 0.12 0.35" radius="0.05" color="#000"></a-sphere>
 
       <!-- BRAZOS -->
       <a-cylinder position="-0.5 0 0" radius="0.04" height="0.4"
-        color="#ff8fcf" rotation="0 0 30"
-        animation="property: rotation; dir: alternate; dur: 1000; loop:true; to: 0 0 -30">
-      </a-cylinder>
+        color="#ff8fcf"
+        animation="property: rotation; dir: alternate; dur: 1000; loop:true; to: 0 0 -30"></a-cylinder>
 
       <a-cylinder position="0.5 0 0" radius="0.04" height="0.4"
-        color="#ff8fcf" rotation="0 0 -30"
-        animation="property: rotation; dir: alternate; dur: 1000; loop:true; to: 0 0 30">
-      </a-cylinder>
+        color="#ff8fcf"
+        animation="property: rotation; dir: alternate; dur: 1000; loop:true; to: 0 0 30"></a-cylinder>
 
       <!-- SALTO -->
       <a-animation
@@ -79,8 +67,7 @@ body {
         direction="alternate"
         dur="1200"
         to="0 0.25 0"
-        repeat="indefinite">
-      </a-animation>
+        repeat="indefinite"></a-animation>
 
     </a-entity>
 
@@ -92,16 +79,16 @@ body {
 <script>
 const frases = [
   "¡Hola! Bienvenido a Sweet Donut 🍩",
-  "Las donas alegran cualquier día 😋",
-  "Comparte dulzura con quien amas 💖",
-  "Hoy es un buen día para una dona ✨",
-  "Sweet Donut te espera 🎉"
+  "Las donas hacen feliz el día 😋",
+  "Hoy es un buen día para una dona 💖",
+  "Comparte dulzura 🎉",
+  "Sweet Donut te espera ✨"
 ];
 
 const bubble = document.getElementById("bubble");
 const marker = document.getElementById("marker");
 
-function hablar(texto) {
+function hablar(texto){
   const voz = new SpeechSynthesisUtterance(texto);
   voz.lang = "es-ES";
   voz.pitch = 1.2;
@@ -110,11 +97,11 @@ function hablar(texto) {
 }
 
 marker.addEventListener("markerFound", () => {
-  const texto = frases[Math.floor(Math.random() * frases.length)];
+  const texto = frases[Math.floor(Math.random()*frases.length)];
   bubble.textContent = texto;
   bubble.style.display = "block";
   hablar(texto);
-  setTimeout(() => bubble.style.display = "none", 4000);
+  setTimeout(()=>bubble.style.display="none", 4000);
 });
 </script>
 
