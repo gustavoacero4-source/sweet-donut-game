@@ -5,6 +5,7 @@
 <title>Sweet Donut Mascota</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- SOLO A-FRAME (SIN AR) -->
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
 <style>
@@ -14,7 +15,7 @@ body {
   font-family: Arial, sans-serif;
 }
 
-#mensaje {
+#bubble {
   position: fixed;
   bottom: 30px;
   left: 50%;
@@ -26,30 +27,24 @@ body {
   font-size: 18px;
   box-shadow: 0 10px 30px rgba(0,0,0,.25);
   display: none;
-  animation: pop 0.4s ease;
   max-width: 80%;
   text-align: center;
-}
-
-@keyframes pop {
-  from { transform: translateX(-50%) scale(0.5); opacity:0; }
-  to { transform: translateX(-50%) scale(1); opacity:1; }
 }
 </style>
 </head>
 
 <body>
 
-<div id="mensaje"></div>
+<div id="bubble"></div>
 
 <a-scene embedded>
 
-  <!-- LUZ -->
+  <!-- LUCES -->
   <a-light type="ambient" intensity="0.9"></a-light>
   <a-light type="directional" position="0 3 2" intensity="0.6"></a-light>
 
-  <!-- MASCOTA -->
-  <a-entity position="0 1.2 -3" id="donut">
+  <!-- DONA -->
+  <a-entity position="0 1.3 -3">
 
     <!-- CUERPO -->
     <a-torus radius="0.6" radius-tubular="0.22"
@@ -67,12 +62,11 @@ body {
       rotation="90 0 0"
       material="color:#7a2e4a"></a-torus>
 
-    <!-- BRAZO IZQ -->
+    <!-- BRAZOS -->
     <a-cylinder position="-0.75 0.05 0" radius="0.05" height="0.45"
       color="#ff8fcf"
       animation="property: rotation; dur: 800; dir: alternate; loop:true; to: 0 0 -40"></a-cylinder>
 
-    <!-- BRAZO DER -->
     <a-cylinder position="0.75 0.05 0" radius="0.05" height="0.45"
       color="#ff8fcf"
       animation="property: rotation; dur: 800; dir: alternate; loop:true; to: 0 0 40"></a-cylinder>
@@ -82,7 +76,7 @@ body {
       attribute="position"
       direction="alternate"
       dur="1000"
-      to="0 1.45 -3"
+      to="0 1.5 -3"
       repeat="indefinite"></a-animation>
 
   </a-entity>
@@ -92,18 +86,15 @@ body {
 
 <script>
 const frases = [
-  "¡Hola! Soy tu dona favorita 🍩",
-  "Una dona mejora cualquier día 😋",
-  "¿Ya pensaste en una dona hoy?",
+  "¡Hola! Soy Sweet Donut 🍩",
+  "Una dona arregla cualquier día 😋",
+  "¿Ya pensaste en algo dulce hoy?",
   "La vida es mejor con azúcar 💖",
-  "Ven por mí… no muerdo 😉",
-  "Comparte dulzura con Sweet Donut ✨",
-  "Una más… y felicidad garantizada 🎉"
+  "Ven… no muerdo 😉"
 ];
 
-const mensaje = document.getElementById("mensaje");
+const bubble = document.getElementById("bubble");
 
-// VOZ
 function hablar(texto){
   const voz = new SpeechSynthesisUtterance(texto);
   voz.lang = "es-ES";
@@ -113,16 +104,12 @@ function hablar(texto){
   speechSynthesis.speak(voz);
 }
 
-// CICLO AUTOMÁTICO
 setInterval(() => {
   const texto = frases[Math.floor(Math.random() * frases.length)];
-  mensaje.textContent = texto;
-  mensaje.style.display = "block";
+  bubble.textContent = texto;
+  bubble.style.display = "block";
   hablar(texto);
-
-  setTimeout(() => {
-    mensaje.style.display = "none";
-  }, 4000);
+  setTimeout(() => bubble.style.display = "none", 4000);
 }, 6000);
 </script>
 
