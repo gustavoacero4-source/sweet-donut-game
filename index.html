@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Sweet Donut AR QR</title>
+<title>Sweet Donut AR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -42,16 +42,14 @@ body {
   arjs="sourceType: webcam; debugUIEnabled: false"
   vr-mode-ui="enabled: false">
 
-  <!-- QR MARKER -->
-  <a-marker type="barcode" value="0" id="qrMarker">
+  <!-- MARKER HIRO -->
+  <a-marker preset="hiro" id="marker">
 
-    <!-- MUÑECO -->
+    <!-- MUÑECO DONA -->
     <a-entity id="donut" position="0 0 0" scale="0.8 0.8 0.8">
 
       <!-- CUERPO -->
-      <a-torus
-        radius="0.45"
-        radius-tubular="0.18"
+      <a-torus radius="0.45" radius-tubular="0.18"
         material="color:#ff8fcf; roughness:0.3">
       </a-torus>
 
@@ -94,14 +92,14 @@ body {
 <script>
 const frases = [
   "¡Hola! Bienvenido a Sweet Donut 🍩",
-  "Las donas hacen feliz cualquier día 😋",
+  "Las donas alegran cualquier día 😋",
   "Comparte dulzura con quien amas 💖",
   "Hoy es un buen día para una dona ✨",
   "Sweet Donut te espera 🎉"
 ];
 
 const bubble = document.getElementById("bubble");
-const marker = document.getElementById("qrMarker");
+const marker = document.getElementById("marker");
 
 function hablar(texto) {
   const voz = new SpeechSynthesisUtterance(texto);
