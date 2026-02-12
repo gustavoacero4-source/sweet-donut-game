@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sweet Donut VR Game</title>
+<title>Sweet Donut VR Mobile</title>
 <style>
 body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 #ui {
@@ -10,7 +10,7 @@ body { margin:0; overflow:hidden; background:black; font-family:Arial; }
   top:10px;
   left:10px;
   color:white;
-  font-size:20px;
+  font-size:18px;
   z-index:10;
 }
 #message {
@@ -19,8 +19,20 @@ body { margin:0; overflow:hidden; background:black; font-family:Arial; }
   left:50%;
   transform:translate(-50%,-50%);
   color:white;
-  font-size:40px;
+  font-size:35px;
   display:none;
+}
+#startBtn{
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 25px;
+  font-size:18px;
+  background:#ff4da6;
+  color:white;
+  border:none;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -32,6 +44,7 @@ body { margin:0; overflow:hidden; background:black; font-family:Arial; }
 </div>
 
 <div id="message"></div>
+<button id="startBtn">INICIAR JUEGO</button>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
 
@@ -45,7 +58,6 @@ document.body.appendChild(renderer.domElement);
 
 camera.position.z = 15;
 
-// Luces
 scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 let light = new THREE.PointLight(0xffffff, 1);
 light.position.set(10,10,10);
@@ -58,9 +70,10 @@ let loseSound = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-retro-arc
 
 let donuts = [];
 let score = 0;
-let targetScore = 15;
+let targetScore = 20;
 let timeLeft = 30;
 let gameEnded = false;
+let timerInterval;
 
 // Crear donas
 function createDonut() {
@@ -79,11 +92,9 @@ function createDonut() {
   donuts.push(donut);
 }
 
-for(let i=0; i<25; i++) {
-  createDonut();
-}
+for(let i=0; i<30; i++) createDonut();
 
-// Movimiento de donas
+// Movimiento
 function moveDonuts() {
   donuts.forEach(d => {
     d.position.x += d.userData.speed;
@@ -95,70 +106,83 @@ function moveDonuts() {
   });
 }
 
-// Detectar toque (celular)
-window.addEventListener("click", onClick);
-
-function onClick(event){
-  if(gameEnded) return;
-
-  let mouse = new THREE.Vector2(
-    (event.clientX / window.innerWidth) * 2 - 1,
-    -(event.clientY / window.innerHeight) * 2 + 1
-  );
-
-  let raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse, camera);
-  let intersects = raycaster.intersectObjects(donuts);
-
-  if(intersects.length > 0){
-    let donut = intersects[0].object;
-    scene.remove(donut);
-    donuts.splice(donuts.indexOf(donut),1);
-    score++;
-    document.getElementById("score").textContent = score;
-    collectSound.play();
-
-    if(score >= targetScore){
-      winGame();
+// Detectar colisión automática (si la cámara se acerca)
+function checkCollision(){
+  donuts.forEach((d,i)=>{
+    if(camera.position.distanceTo(d.position) < 2){
+      scene.remove(d);
+      donuts.splice(i,1);
+      score++;
+      document.getElementById("score").textContent = score;
+      collectSound.play();
+      if(score >= targetScore) winGame();
     }
-  }
+  });
 }
 
 // Temporizador
-let timerInterval = setInterval(() => {
-  if(gameEnded) return;
-
-  timeLeft--;
-  document.getElementById("timer").textContent = timeLeft;
-
-  if(timeLeft <= 0){
-    loseGame();
-  }
-}, 1000);
+function startTimer(){
+  timerInterval = setInterval(()=>{
+    if(gameEnded) return;
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if(timeLeft <= 0) loseGame();
+  },1000);
+}
 
 // Ganar
 function winGame(){
   gameEnded = true;
   winSound.play();
-  document.getElementById("message").style.display = "block";
-  document.getElementById("message").textContent = "🎉 ¡GANASTE!";
+  document.getElementById("message").style.display="block";
+  document.getElementById("message").textContent="🎉 ¡GANASTE!";
 }
 
 // Perder
 function loseGame(){
   gameEnded = true;
   loseSound.play();
-  document.getElementById("message").style.display = "block";
-  document.getElementById("message").textContent = "💀 PERDISTE";
+  document.getElementById("message").style.display="block";
+  document.getElementById("message").textContent="💀 PERDISTE";
+}
+
+// 🎮 CONTROL POR GIROSCOPIO
+function enableGyro(){
+  if(typeof DeviceOrientationEvent.requestPermission === 'function'){
+    DeviceOrientationEvent.requestPermission()
+    .then(permission=>{
+      if(permission === 'granted'){
+        window.addEventListener('deviceorientation', handleOrientation);
+      }
+    });
+  } else {
+    window.addEventListener('deviceorientation', handleOrientation);
+  }
+}
+
+function handleOrientation(event){
+  let tiltLR = event.gamma; // izquierda/derecha
+  let tiltFB = event.beta;  // adelante/atrás
+
+  camera.position.x = tiltLR * 0.05;
+  camera.position.y = -tiltFB * 0.03;
 }
 
 // Animación
 function animate(){
   requestAnimationFrame(animate);
   moveDonuts();
+  checkCollision();
   renderer.render(scene, camera);
 }
 animate();
+
+// Botón inicio
+document.getElementById("startBtn").addEventListener("click",()=>{
+  enableGyro();
+  startTimer();
+  document.getElementById("startBtn").style.display="none";
+});
 
 // Ajuste pantalla
 window.addEventListener('resize', ()=>{
